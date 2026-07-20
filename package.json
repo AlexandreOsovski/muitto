@@ -1,8 +1,10 @@
 {
   "name": "muitto",
   "version": "1.0.0",
-  "description": "Transformando porco em bacon — a minimalist, zero-dependency test runner for TypeScript",
+  "description": "Turning pork (poku) into bacon — a minimalist, zero-dependency test runner for TypeScript",
   "keywords": [
+    "🥓",
+    "MUITTO",
     "test",
     "test-runner",
     "testing",
