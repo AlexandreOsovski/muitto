@@ -20,7 +20,7 @@ import { join } from 'node:path';
 export interface TestConfig {
   /** Array of glob patterns to find test files */
   pattern: string[];
-  /** Alternative test match patterns (compatible with Jest) */
+  /** Alternative test match patterns */
   testMatch: string[];
   /** Patterns to ignore during test discovery */
   testPathIgnorePatterns: string[];
