@@ -197,7 +197,7 @@ function isAsymmetricMatcher(value: unknown): value is AsymmetricMatcher {
     typeof value === "object" &&
     value !== null &&
     "$$typeof" in value &&
-    (value as any).$$typeof === Symbol.for("jest.asymmetricMatcher")
+    (value as any).$$typeof === Symbol.for("muitto.asymmetricMatcher")
   );
 }
 
@@ -986,7 +986,7 @@ export const expect: ExpectFunction = Object.assign(
      */
     any(constructor: any): AsymmetricMatcher {
       return {
-        $$typeof: Symbol.for("jest.asymmetricMatcher"),
+        $$typeof: Symbol.for("muitto.asymmetricMatcher"),
         asymmetricMatch: (value: unknown): boolean => {
           if (constructor === String) return typeof value === "string";
           if (constructor === Number) return typeof value === "number";
@@ -1008,7 +1008,7 @@ export const expect: ExpectFunction = Object.assign(
      */
     anything(): AsymmetricMatcher {
       return {
-        $$typeof: Symbol.for("jest.asymmetricMatcher"),
+        $$typeof: Symbol.for("muitto.asymmetricMatcher"),
         asymmetricMatch: (): boolean => true,
         toAsymmetricMatcher: (): string => "Anything",
       };
@@ -1027,7 +1027,7 @@ export const expect: ExpectFunction = Object.assign(
      */
     arrayContaining(arr: unknown[]): AsymmetricMatcher {
       return {
-        $$typeof: Symbol.for("jest.asymmetricMatcher"),
+        $$typeof: Symbol.for("muitto.asymmetricMatcher"),
         asymmetricMatch: (actual: unknown[]): boolean =>
           Array.isArray(actual) &&
           arr.every((item) => actual.some((el) => deepEqual(el, item))),
@@ -1049,7 +1049,7 @@ export const expect: ExpectFunction = Object.assign(
      */
     objectContaining(obj: Record<string, unknown>): AsymmetricMatcher {
       return {
-        $$typeof: Symbol.for("jest.asymmetricMatcher"),
+        $$typeof: Symbol.for("muitto.asymmetricMatcher"),
         asymmetricMatch: (actual: Record<string, unknown>): boolean =>
           typeof actual === "object" &&
           actual !== null &&
@@ -1067,7 +1067,7 @@ export const expect: ExpectFunction = Object.assign(
      */
     stringContaining(str: string): AsymmetricMatcher {
       return {
-        $$typeof: Symbol.for("jest.asymmetricMatcher"),
+        $$typeof: Symbol.for("muitto.asymmetricMatcher"),
         asymmetricMatch: (actual: string): boolean =>
           typeof actual === "string" && actual.includes(str),
         toAsymmetricMatcher: (): string => `StringContaining<"${str}">`,
@@ -1087,7 +1087,7 @@ export const expect: ExpectFunction = Object.assign(
      */
     stringMatching(pattern: string | RegExp): AsymmetricMatcher {
       return {
-        $$typeof: Symbol.for("jest.asymmetricMatcher"),
+        $$typeof: Symbol.for("muitto.asymmetricMatcher"),
         asymmetricMatch: (actual: string): boolean =>
           typeof actual === "string" &&
           (typeof pattern === "string"
