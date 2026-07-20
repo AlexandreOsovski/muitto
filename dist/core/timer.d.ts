@@ -26,6 +26,8 @@
  * // ... execution ...
  * const setupTime = timer.getDuration('setup'); // time from setup until now
  * const execTime = timer.getDuration('execution'); // time from execution until now
+ *
+ * @author alexandreosovski
  */
 export declare class PerformanceTimer {
     /** Timestamp of when the timer was started */

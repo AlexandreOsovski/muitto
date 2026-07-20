@@ -29,6 +29,8 @@ import { color, divider } from "../colors.js";
  * // Duration    2.34s
  * //
  * // ✖ Some tests failed
+ *
+ * @author alexandreosovski
  */
 export function formatSummary(summary) {
     const { totalPassed, totalFailed, totalSkipped, durationMs, files } = summary;

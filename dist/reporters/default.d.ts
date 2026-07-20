@@ -170,6 +170,8 @@ export declare class DotReporter extends BaseReporter {
  * const reporter = new VerboseReporter();
  * await runTests({ reporter });
  * // Shows each test starting and its result
+ *
+ * @author alexandreosovski
  */
 export declare class VerboseReporter extends BaseReporter {
     name: string;

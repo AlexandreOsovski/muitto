@@ -4,6 +4,8 @@ import type { RunOptions } from "../core/runner.js";
  *
  * @interface WatchOptions
  * @extends {RunOptions}
+ *
+ * @author alexandreosovski
  */
 interface WatchOptions extends RunOptions {
     /** Debounce time in milliseconds before re-running tests after a change */

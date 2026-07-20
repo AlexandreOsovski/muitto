@@ -17,6 +17,8 @@
  *
  * // Force colors in pipe
  * FORCE_COLOR=1 node test.js | cat
+ *
+ * @author alexandreosovski
  */
 const isColorEnabled = process.env.NO_COLOR === undefined &&
     (process.stdout.isTTY || process.env.FORCE_COLOR !== undefined);

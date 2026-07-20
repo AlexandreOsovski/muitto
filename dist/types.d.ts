@@ -6,6 +6,8 @@
  * reporters, and configuration options.
  *
  * @module types
+ *
+ * @author alexandreosovski
  */
 /**
  * Test function signature - can be synchronous or asynchronous

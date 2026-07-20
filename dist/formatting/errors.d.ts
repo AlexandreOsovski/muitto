@@ -23,6 +23,8 @@
  * @example
  * // Non-Error value
  * formatError('plain error string')
+ *
+ * @author alexandreosovski
  */
 export declare function formatError(error: unknown): string;
 /**

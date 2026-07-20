@@ -4,6 +4,8 @@ import type { RunSummary } from "../types.js";
  * Configuration options for the JSON reporter
  *
  * @interface JsonReporterOptions
+ *
+ * @author alexandreosovski
  */
 export interface JsonReporterOptions {
     /** If provided, writes the report to this file path instead of stdout */

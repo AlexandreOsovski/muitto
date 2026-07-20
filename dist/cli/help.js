@@ -16,13 +16,13 @@ export class HelpSystem {
     /** List of options registered in the help system */
     options = [];
     /** Tool name displayed in the header */
-    name = "mutto";
+    name = "muitto";
     /** Tool description */
     description = "A minimalist test runner for TypeScript";
     /** Current tool version */
     version = "1.0.0";
     /** Usage string displayed in the instructions section */
-    usage = "mutto [options] [files...]";
+    usage = "muitto [options] [files...]";
     /**
      * Adds a single option to the help system
      *
@@ -82,7 +82,7 @@ export class HelpSystem {
     /**
      * Sets the tool usage string
      *
-     * @param {string} usage - Usage string (e.g.: "mutto [options] [files...]")
+     * @param {string} usage - Usage string (e.g.: "muitto [options] [files...]")
      * @returns {this} Returns the instance itself for method chaining
      */
     setUsage(usage) {
@@ -106,11 +106,11 @@ export class HelpSystem {
      * const helpText = helpSystem.render();
      * console.log(helpText);
      * // Output:
-     * // MUTTO v1.0.0
+     * // MUITTO v1.0.0
      * // A minimalist test runner for TypeScript
      * //
      * // Usage:
-     * //   mutto [options] [files...]
+     * //   muitto [options] [files...]
      * // ...
      */
     render() {
@@ -153,12 +153,12 @@ export class HelpSystem {
         lines.push("");
         // Examples
         lines.push(color.bold("Examples:"));
-        lines.push(color.dim("  mutto"));
-        lines.push(color.dim("  mutto --watch"));
-        lines.push(color.dim('  mutto --grep "auth"'));
-        lines.push(color.dim("  mutto --reporter verbose"));
-        lines.push(color.dim("  mutto --reporter junit --output ./junit.xml"));
-        lines.push(color.dim("  mutto ./tests --coverage"));
+        lines.push(color.dim("  muitto"));
+        lines.push(color.dim("  muitto --watch"));
+        lines.push(color.dim('  muitto --grep "auth"'));
+        lines.push(color.dim("  muitto --reporter verbose"));
+        lines.push(color.dim("  muitto --reporter junit --output ./junit.xml"));
+        lines.push(color.dim("  muitto ./tests --coverage"));
         lines.push("");
         // Footer
         lines.push(color.dim(`For more information, visit: https://github.com/alexandreosovski/muitto`));

@@ -15,6 +15,8 @@ import type { Matchers } from "./types.js";
  *   received: 43,
  *   operator: 'toBe'
  * });
+ *
+ * @author alexandreosovski
  */
 export declare class AssertionError extends Error {
     /** Expected value in the assertion */

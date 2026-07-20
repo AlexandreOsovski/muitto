@@ -38,6 +38,9 @@ function parseArgs(argv) {
     };
     for (let i = 0; i < argv.length; i++) {
         const arg = argv[i];
+        // Skip if arg is undefined
+        if (!arg)
+            continue;
         switch (arg) {
             case "--watch":
             case "-w":
@@ -47,14 +50,14 @@ function parseArgs(argv) {
                 args.coverage = true;
                 break;
             case "--grep":
-                args.grep = argv[++i];
+                args.grep = argv[++i] ?? "";
                 break;
             case "--reporter":
-                args.reporter = argv[++i] || "default";
+                args.reporter = argv[++i] ?? "default";
                 break;
             case "--output":
             case "-o":
-                args.outputFile = argv[++i];
+                args.outputFile = argv[++i] ?? undefined;
                 break;
             case "--update-snapshots":
                 args.updateSnapshots = true;
@@ -68,7 +71,10 @@ function parseArgs(argv) {
                 break;
             case "--pattern":
             case "-p":
-                args.pattern = new RegExp(argv[++i]);
+                const patternStr = argv[++i];
+                if (patternStr) {
+                    args.pattern = new RegExp(patternStr);
+                }
                 break;
             case "--help":
             case "-h":

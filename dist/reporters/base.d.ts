@@ -25,6 +25,8 @@ import type { TestCase, TestResult, FileResult, RunSummary } from "../types.js";
  *     }
  *   }
  * }
+ *
+ * @author alexandreosovski
  */
 export interface Reporter {
     /** Reporter identifier name (e.g.: "default", "verbose", "dot") */

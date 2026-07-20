@@ -15,6 +15,8 @@ import type { FileResult, RunSummary } from "../types.js";
  * collector.addFileResult(fileResult2);
  * const summary = collector.getSummary();
  * console.log(`${summary.totalPassed} tests passed`);
+ *
+ * @author alexandreosovski
  */
 export declare class ResultCollector {
     /** List of results per test file */

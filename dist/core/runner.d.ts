@@ -4,6 +4,8 @@ import type { Reporter } from "../reporters/base.js";
  * Interface that defines the test execution options
  *
  * @interface RunOptions
+ *
+ * @author alexandreosovski
  */
 export interface RunOptions {
     /** List of test file paths to run */

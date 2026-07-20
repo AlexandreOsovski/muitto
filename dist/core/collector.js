@@ -14,6 +14,8 @@
  * collector.addFileResult(fileResult2);
  * const summary = collector.getSummary();
  * console.log(`${summary.totalPassed} tests passed`);
+ *
+ * @author alexandreosovski
  */
 export class ResultCollector {
     /** List of results per test file */

@@ -26,6 +26,8 @@ import { AssertionError } from "../assert.js";
  * @example
  * // Non-Error value
  * formatError('plain error string')
+ *
+ * @author alexandreosovski
  */
 export function formatError(error) {
     // Non-Error values are converted directly

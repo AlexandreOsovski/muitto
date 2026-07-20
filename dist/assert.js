@@ -14,6 +14,8 @@
  *   received: 43,
  *   operator: 'toBe'
  * });
+ *
+ * @author alexandreosovski
  */
 export class AssertionError extends Error {
     /** Expected value in the assertion */

@@ -4,6 +4,8 @@ import { expect } from "./assert.js";
  * Interface that defines the lifecycle hooks of a test suite
  *
  * @interface SuiteHooks
+ *
+ * @author alexandreosovski
  */
 interface SuiteHooks {
     /** Hooks executed before each test */

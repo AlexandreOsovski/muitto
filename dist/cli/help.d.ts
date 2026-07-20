@@ -83,7 +83,7 @@ export declare class HelpSystem {
     /**
      * Sets the tool usage string
      *
-     * @param {string} usage - Usage string (e.g.: "mutto [options] [files...]")
+     * @param {string} usage - Usage string (e.g.: "muitto [options] [files...]")
      * @returns {this} Returns the instance itself for method chaining
      */
     setUsage(usage: string): this;
@@ -104,11 +104,11 @@ export declare class HelpSystem {
      * const helpText = helpSystem.render();
      * console.log(helpText);
      * // Output:
-     * // MUTTO v1.0.0
+     * // MUITTO v1.0.0
      * // A minimalist test runner for TypeScript
      * //
      * // Usage:
-     * //   mutto [options] [files...]
+     * //   muitto [options] [files...]
      * // ...
      */
     render(): string;

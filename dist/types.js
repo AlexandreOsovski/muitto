@@ -6,6 +6,8 @@
  * reporters, and configuration options.
  *
  * @module types
+ *
+ * @author alexandreosovski
  */
 export {};
 //# sourceMappingURL=types.js.map

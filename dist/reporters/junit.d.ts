@@ -4,6 +4,8 @@ import type { RunSummary } from "../types.js";
  * Configuration options for the JUnit reporter
  *
  * @interface JunitReporterOptions
+ *
+ * @author alexandreosovski
  */
 export interface JunitReporterOptions {
     /** If provided, writes the XML report to this file path instead of stdout */

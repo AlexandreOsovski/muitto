@@ -24,6 +24,8 @@ import type { TestCase, TestResult, FileResult, RunSummary } from "../types.js";
  *   case "file_start": // event.filePath is available
  *   case "test_end": // event.result is available
  * }
+ *
+ * @author alexandreosovski
  */
 export type ReporterEvent = 
 /** Start of execution of all tests */

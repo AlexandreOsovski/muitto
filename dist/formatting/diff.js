@@ -309,7 +309,7 @@ function formatValue(value) {
  * @example
  * deepEqual({ a: 1, b: [2, 3] }, { a: 1, b: [2, 3] })  // true
  * deepEqual({ a: 1 }, { a: 1, b: 2 })                    // false
- * deepEqual(new Date('2024-01-01'), new Date('2024-01-01')) // true
+ * deepEqual(new Date('2026-07-20'), new Date('2026-07-20')) // true
  * deepEqual(/abc/, /abc/)                                  // true
  * deepEqual(NaN, NaN)                                      // true (via Object.is)
  */

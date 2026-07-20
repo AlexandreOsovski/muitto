@@ -29,6 +29,8 @@ import type { RunSummary } from "../types.js";
  * // Duration    2.34s
  * //
  * // ✖ Some tests failed
+ *
+ * @author alexandreosovski
  */
 export declare function formatSummary(summary: RunSummary): string;
 /**
