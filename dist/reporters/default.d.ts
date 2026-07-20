@@ -182,5 +182,27 @@ export declare class VerboseReporter extends BaseReporter {
      * @param {TestCase} test - Test that will be executed
      */
     onTestStart(test: TestCase): void;
+    /**
+     * Called after each individual test
+     * Shows detailed result for each test
+     *
+     * @param {TestResult} result - Test execution result
+     */
+    onTestEnd(result: TestResult): void;
+    /**
+     * Returns the icon corresponding to the test status
+     *
+     * @param {"passed" | "failed" | "skipped"} status - Test status
+     * @returns {string} Corresponding icon (✓, ✗, ○)
+     * @private
+     */
+    private getIcon;
+    /**
+     * At the end, delegates the summary to DefaultReporter
+     * maintaining consistency in the final presentation
+     *
+     * @param {RunSummary} summary - Complete execution summary
+     */
+    onEnd(summary: RunSummary): void;
 }
 //# sourceMappingURL=default.d.ts.map

@@ -300,5 +300,60 @@ export class VerboseReporter extends BaseReporter {
     onTestStart(test) {
         console.log(color.dim(`  RUNS ${test.name}...`));
     }
+    /**
+     * Called after each individual test
+     * Shows detailed result for each test
+     *
+     * @param {TestResult} result - Test execution result
+     */
+    onTestEnd(result) {
+        const icon = this.getIcon(result.status);
+        const name = result.test.name;
+        const duration = result.durationMs;
+        let line = `  ${icon} ${name}`;
+        if (result.status === "passed") {
+            line += color.green(` ✓ (${duration.toFixed(0)}ms)`);
+        }
+        else if (result.status === "failed") {
+            line += color.red(` ✗ (${duration.toFixed(0)}ms)`);
+            if (result.error) {
+                const errorMsg = result.error instanceof Error
+                    ? result.error.message
+                    : String(result.error);
+                line += color.red(`\n    ${errorMsg}`);
+            }
+        }
+        else {
+            line = color.dim(line + " (skipped)");
+        }
+        console.log(line);
+    }
+    /**
+     * Returns the icon corresponding to the test status
+     *
+     * @param {"passed" | "failed" | "skipped"} status - Test status
+     * @returns {string} Corresponding icon (✓, ✗, ○)
+     * @private
+     */
+    getIcon(status) {
+        switch (status) {
+            case "passed":
+                return symbols.pass;
+            case "failed":
+                return symbols.fail;
+            case "skipped":
+                return symbols.skip;
+        }
+    }
+    /**
+     * At the end, delegates the summary to DefaultReporter
+     * maintaining consistency in the final presentation
+     *
+     * @param {RunSummary} summary - Complete execution summary
+     */
+    onEnd(summary) {
+        console.log("\n");
+        new DefaultReporter().onEnd(summary);
+    }
 }
 //# sourceMappingURL=default.js.map

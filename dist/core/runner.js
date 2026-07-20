@@ -6,7 +6,8 @@ import { __getRegistry } from "../index.js";
 import { DefaultReporter } from "../reporters/default.js";
 import { ResultCollector } from "./collector.js";
 import { PerformanceTimer } from "./timer.js";
-/** Regex pattern to identify test files */
+import { loadConfig, getTestFiles } from "../config/loader.js";
+/** Regex pattern to identify test files (fallback) */
 const DEFAULT_PATTERN = /\.(test|spec)\.(ts|js|mjs|cjs)$/;
 /** Directories ignored during file discovery */
 const IGNORED_DIRS = new Set([
@@ -16,37 +17,64 @@ const IGNORED_DIRS = new Set([
  * Runs a complete test suite
  *
  * Main function of the test runner that coordinates the entire execution flow:
- * 1. Discovers test files (if not specified)
- * 2. Initializes reporter and result collector
- * 3. Runs each test file sequentially
- * 4. Supports bail mode (stop on first error)
- * 5. Generates final results summary
+ * 1. Loads configuration from package.json and .muittorc.json
+ * 2. Discovers test files automatically (if not specified)
+ * 3. Initializes reporter and result collector
+ * 4. Runs each test file sequentially
+ * 5. Supports bail mode (stop on first error)
+ * 6. Generates final results summary
  *
  * @async
  * @param {RunOptions} [options={}] - Execution configuration options
  * @returns {Promise<RunSummary>} Complete summary with execution metrics
  *
  * @example
+ * // Auto-discovery with default config
+ * const summary = await runTests();
+ *
+ * @example
+ * // With custom options
  * const summary = await runTests({
  *   files: ['./tests/math.test.ts'],
- *   timeoutMs: 10000,
- *   bail: true
+ *   timeout: 10000,
+ *   bail: true,
+ *   reporter: new VerboseReporter()
  * });
- * console.log(`${summary.totalPassed} passed, ${summary.totalFailed} failed`);
  */
 export async function runTests(options = {}) {
+    const cwd = process.cwd();
+    // Load configuration from all sources
+    const loadOptions = {
+        files: options.files,
+        pattern: options.pattern,
+        testMatch: options.testMatch,
+        timeout: options.timeout,
+        reporter: options.reporter ? options.reporter.name : undefined,
+        coverage: options.coverage,
+        grep: options.grep || options.filter,
+        bail: options.bail
+    };
+    const config = loadConfig(cwd, loadOptions);
     const reporter = options.reporter || new DefaultReporter();
     const collector = new ResultCollector();
     const timer = new PerformanceTimer();
-    const timeoutMs = options.timeoutMs ?? 5000;
-    const filter = options.filter ?? "";
-    let files;
-    // Discovers test files if not explicitly specified
-    if (options.files && options.files.length > 0) {
-        files = options.files;
+    const timeoutMs = options.timeout ?? config.timeout ?? 5000;
+    const filter = options.filter ?? options.grep ?? config.grep ?? "";
+    // Get test files (auto-discovery or explicit)
+    let files = options.files || [];
+    if (files.length === 0) {
+        files = getTestFiles(config, cwd);
     }
     else {
-        files = discoverTestFiles(process.cwd(), options.pattern ?? DEFAULT_PATTERN);
+        // Resolve explicit file paths
+        files = files.map(f => resolve(cwd, f));
+    }
+    // If no files found, show helpful message
+    if (files.length === 0) {
+        console.log('No test files found.');
+        console.log('Looking for patterns:');
+        config.pattern.forEach((p) => console.log(`  - ${p}`));
+        process.exit(0);
     }
     collector.start();
     timer.start();
@@ -55,7 +83,12 @@ export async function runTests(options = {}) {
     // Runs each test file sequentially
     for (const file of files) {
         reporter.onFileStart?.(file);
-        const result = await runSingleFile(file, { timeoutMs, filter, reporter, bail: options.bail });
+        const result = await runSingleFile(file, {
+            timeoutMs,
+            filter,
+            reporter,
+            bail: options.bail
+        });
         collector.addFileResult(result);
         reporter.onFileEnd?.(result);
         // Bail mode: stops if a failure was found

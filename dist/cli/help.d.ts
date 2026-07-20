@@ -2,6 +2,8 @@
  * Interface that defines a command line option
  *
  * @interface CliOption
+ *
+ * @author alexandreosovski
  */
 export interface CliOption {
     /** Full flag name (e.g.: --watch) */

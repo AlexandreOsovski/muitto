@@ -50,8 +50,11 @@
     "clean": "rimraf dist",
     "prebuild": "npm run clean",
     "prepublishOnly": "npm run build",
-    "test": "tsx src/cli/cli.ts",
-    "test:watch": "tsx src/cli/cli.ts --watch"
+    "test": "node dist/cli/cli.js",
+    "test:watch": "node dist/cli/cli.js --watch",
+    "dev": "tsx src/cli/cli.ts",
+    "dev:watch": "tsx src/cli/cli.ts --watch",
+    "dev:patterns": "tsx src/cli/cli.ts --show-patterns"
   },
   "devDependencies": {
     "@types/node": "^20.14.0",

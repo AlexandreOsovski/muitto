@@ -1,5 +1,6 @@
 import type { RunSummary } from "../types.js";
 import type { Reporter } from "../reporters/base.js";
+import { type LoadOptions } from "../config/loader.js";
 /**
  * Interface that defines the test execution options
  *
@@ -7,13 +8,9 @@ import type { Reporter } from "../reporters/base.js";
  *
  * @author alexandreosovski
  */
-export interface RunOptions {
+export interface RunOptions extends Omit<LoadOptions, 'reporter'> {
     /** List of test file paths to run */
     files?: string[];
-    /** Custom regex pattern for test file discovery */
-    pattern?: RegExp;
-    /** Timeout in milliseconds for each individual test */
-    timeoutMs?: number;
     /** Optional filter by test or suite name */
     filter?: string;
     /** Reporter instance for result output */
@@ -25,23 +22,29 @@ export interface RunOptions {
  * Runs a complete test suite
  *
  * Main function of the test runner that coordinates the entire execution flow:
- * 1. Discovers test files (if not specified)
- * 2. Initializes reporter and result collector
- * 3. Runs each test file sequentially
- * 4. Supports bail mode (stop on first error)
- * 5. Generates final results summary
+ * 1. Loads configuration from package.json and .muittorc.json
+ * 2. Discovers test files automatically (if not specified)
+ * 3. Initializes reporter and result collector
+ * 4. Runs each test file sequentially
+ * 5. Supports bail mode (stop on first error)
+ * 6. Generates final results summary
  *
  * @async
  * @param {RunOptions} [options={}] - Execution configuration options
  * @returns {Promise<RunSummary>} Complete summary with execution metrics
  *
  * @example
+ * // Auto-discovery with default config
+ * const summary = await runTests();
+ *
+ * @example
+ * // With custom options
  * const summary = await runTests({
  *   files: ['./tests/math.test.ts'],
- *   timeoutMs: 10000,
- *   bail: true
+ *   timeout: 10000,
+ *   bail: true,
+ *   reporter: new VerboseReporter()
  * });
- * console.log(`${summary.totalPassed} passed, ${summary.totalFailed} failed`);
  */
 export declare function runTests(options?: RunOptions): Promise<RunSummary>;
 /**

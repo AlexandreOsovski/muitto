@@ -2,15 +2,14 @@
 import { resolve } from "node:path";
 import { statSync } from "node:fs";
 import { createRequire } from "node:module";
-import { runTests, discoverTestFiles } from "../core/runner.js";
+import { runTests } from "../core/runner.js";
 import { color } from "../colors.js";
 import { HelpSystem, predefinedOptions } from "./help.js";
 import { watchMode } from "./watch.js";
 import { DefaultReporter, DotReporter, VerboseReporter, } from "../reporters/default.js";
 import { JsonReporter } from "../reporters/json.js";
 import { JunitReporter } from "../reporters/junit.js";
-/** Regex pattern to identify test files */
-const DEFAULT_PATTERN = /\.(test|spec)\.(ts|js|mjs|cjs)$/;
+import { loadConfig, getTestFiles } from "../config/loader.js";
 /** Reads the package.json version at runtime so the CLI never drifts from it */
 const require = createRequire(import.meta.url);
 const pkg = require("../../package.json");
@@ -35,6 +34,7 @@ function parseArgs(argv) {
         bail: false,
         help: false,
         version: false,
+        showPatterns: false,
     };
     for (let i = 0; i < argv.length; i++) {
         const arg = argv[i];
@@ -69,12 +69,8 @@ function parseArgs(argv) {
             case "--bail":
                 args.bail = true;
                 break;
-            case "--pattern":
-            case "-p":
-                const patternStr = argv[++i];
-                if (patternStr) {
-                    args.pattern = new RegExp(patternStr);
-                }
+            case "--show-patterns":
+                args.showPatterns = true;
                 break;
             case "--help":
             case "-h":
@@ -129,7 +125,7 @@ function getReporter(name, outputFile) {
  * Responsible for:
  * - Parsing command line arguments
  * - Displaying help or version if requested
- * - Discovering test files
+ * - Discovering test files automatically
  * - Running tests in watch mode or single execution
  * - Displaying detailed results in case of failures
  *
@@ -138,6 +134,7 @@ function getReporter(name, outputFile) {
  */
 async function main() {
     const args = parseArgs(process.argv.slice(2));
+    const cwd = process.cwd();
     // Show help
     if (args.help) {
         const helpSystem = new HelpSystem();
@@ -148,23 +145,47 @@ async function main() {
     }
     // Show version
     if (args.version) {
-        console.log(`mutto v${pkg.version}`);
+        console.log(`muitto v${pkg.version}`);
         process.exit(0);
     }
-    // Collect test files
-    let files;
-    if (args.files.length > 0) {
-        files = [];
-        for (const fileOrDir of args.files) {
+    // Show configured patterns
+    if (args.showPatterns) {
+        const config = loadConfig(cwd);
+        console.log(color.bold(color.cyan('\nMUITTO Test Patterns:')));
+        console.log(color.dim('Configured patterns:'));
+        config.pattern.forEach((p) => console.log(`  ${color.green('✓')} ${p}`));
+        console.log(color.dim(`\nTest timeout: ${config.timeout}ms`));
+        console.log(color.dim(`Reporter: ${config.reporter}`));
+        process.exit(0);
+    }
+    // Load configuration
+    const config = loadConfig(cwd, {
+        files: args.files.length > 0 ? args.files : undefined,
+        timeout: args.timeoutMs,
+        reporter: args.reporter,
+        coverage: args.coverage,
+        grep: args.grep,
+        bail: args.bail,
+    });
+    // Get test files (auto-discovery or explicit)
+    let files = args.files || [];
+    if (files.length === 0) {
+        files = getTestFiles(config, cwd);
+    }
+    else {
+        // Resolve explicit file paths
+        const resolvedFiles = [];
+        for (const fileOrDir of files) {
             const resolved = resolve(fileOrDir);
             try {
                 const stat = statSync(resolved);
                 if (stat.isDirectory()) {
-                    const discovered = discoverTestFiles(resolved, args.pattern ?? DEFAULT_PATTERN);
-                    files.push(...discovered);
+                    // If it's a directory, discover tests inside it
+                    const discovered = getTestFiles({ ...config, files: [] }, resolved);
+                    resolvedFiles.push(...discovered);
                 }
                 else if (stat.isFile()) {
-                    files.push(resolved);
+                    resolvedFiles.push(resolved);
                 }
             }
             catch {
@@ -172,23 +193,23 @@ async function main() {
                 process.exit(1);
             }
         }
+        files = [...new Set(resolvedFiles)];
     }
-    else {
-        files = discoverTestFiles(process.cwd(), args.pattern ?? DEFAULT_PATTERN);
-    }
-    files = [...new Set(files)];
     if (files.length === 0) {
-        console.log(color.yellow("No test files found."));
-        console.log(color.dim(`Pattern: ${args.pattern ?? DEFAULT_PATTERN}`));
+        console.log(color.yellow('No test files found.'));
+        console.log(color.dim('Configured patterns:'));
+        config.pattern.forEach((p) => console.log(`  ${p}`));
+        console.log(color.dim('\nTip: Use --show-patterns to see all configured patterns'));
+        console.log(color.dim('     Or use --help to see available options'));
         process.exit(0);
     }
-    const reporter = getReporter(args.reporter, args.outputFile);
+    const reporter = getReporter(config.reporter, args.outputFile);
     const runOptions = {
         files,
-        timeoutMs: args.timeoutMs,
-        filter: args.grep,
+        timeout: config.timeout,
+        filter: config.grep,
         reporter,
-        bail: args.bail,
+        bail: config.bail,
     };
     // Watch mode
     if (args.watch) {
