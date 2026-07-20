@@ -1,5 +1,5 @@
 {
-  "name": "muitto",
+  "name": "@aleosovski/muitto",
   "version": "1.4.4",
   "description": "Turning pork (poku) into bacon — a minimalist, zero-dependency test runner for TypeScript",
   "keywords": [
