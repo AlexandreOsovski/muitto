@@ -1,6 +1,6 @@
 {
   "name": "muitto",
-  "version": "1.1.0",
+  "version": "1.4.4",
   "description": "Turning pork (poku) into bacon — a minimalist, zero-dependency test runner for TypeScript",
   "keywords": [
     "🥓",
@@ -36,12 +36,6 @@
     "README.md",
     "LICENSE"
   ],
-  "exports": {
-    ".": {
-      "types": "./dist/index.d.ts",
-      "import": "./dist/index.js"
-    }
-  },
   "engines": {
     "node": ">=18.0.0"
   },
