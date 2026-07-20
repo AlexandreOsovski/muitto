@@ -50,7 +50,7 @@ npx muitto
 ### Watch Mode
 
 ```bash
-npx muitto --watch
+npx muitto --watch 
 ```
 
 ### Filtrar testes
