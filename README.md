@@ -36,7 +36,7 @@ npm install --save-dev @aleosovski/muitto
 Ou use diretamente com npx:
 
 ```bash
-npx @aleosovski/muitto
+npx muitto
 ```
 
 ## 🚀 Uso Rápido
