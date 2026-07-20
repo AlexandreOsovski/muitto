@@ -23,12 +23,16 @@
     "url": "git+https://github.com/alexandreosovski/muitto.git"
   },
   "license": "MIT",
-  "author": "Alexandre Osovski",
+  "author": {
+    "name": "Alexandre Osovski",
+    "email": "alexandreosovski1@gmail.com",
+    "url": "https://github.com/alexandreosovski"
+  },
   "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "bin": {
-    "muitto": "./bin/index.js"
+    "muitto": "bin/index.js"
   },
   "files": [
     "dist",
