@@ -1,6 +1,7 @@
 src
 __tests__
 .git
+dist
 .github
 tsconfig.json
 *.test.ts
