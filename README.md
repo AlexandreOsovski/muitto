@@ -4,7 +4,7 @@
 
 **MUITTO** é um test runner minimalista para TypeScript, construído sem dependências externas em runtime (além do `tsx` para transpilação em dev). Rápido, leve e com uma interface moderna inspirada nos melhores test runners do mercado.
 
-[![npm version](https://img.shields.io/npm/v/muitto.svg)](https://www.npmjs.com/package/@aleosovski/muitto)
+[![npm version](https://img.shields.io/npm/v/@aleosovski/muitto.svg)](https://www.npmjs.com/package/@aleosovski/muitto)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Node.js Version](https://img.shields.io/badge/node-%3E%3D18.0.0-brightgreen.svg)](https://nodejs.org/)
 
