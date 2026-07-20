@@ -30,13 +30,13 @@
 ## 📦 Instalação
 
 ```bash
-npm install --save-dev muitto
+npm install --save-dev @aleosovski/muitto
 ```
 
 Ou use diretamente com npx:
 
 ```bash
-npx muitto
+npx @aleosovski/muitto
 ```
 
 ## 🚀 Uso Rápido
