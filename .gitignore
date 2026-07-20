@@ -1,0 +1,9 @@
+src
+__tests__
+.git
+.github
+tsconfig.json
+*.test.ts
+*.spec.ts
+.editorconfig
+.vscode

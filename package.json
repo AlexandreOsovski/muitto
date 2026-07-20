@@ -1,0 +1,63 @@
+{
+  "name": "muitto",
+  "version": "1.0.0",
+  "description": "Transformando porco em bacon — a minimalist, zero-dependency test runner for TypeScript",
+  "keywords": [
+    "test",
+    "test-runner",
+    "testing",
+    "typescript",
+    "unit-test",
+    "assertion",
+    "mock",
+    "tdd"
+  ],
+  "homepage": "https://github.com/alexandreosovski/muitto#readme",
+  "bugs": {
+    "url": "https://github.com/alexandreosovski/muitto/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/alexandreosovski/muitto.git"
+  },
+  "license": "MIT",
+  "author": "Alexandre Osovski",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "bin": {
+    "muitto": "./bin/index.js"
+  },
+  "files": [
+    "dist",
+    "bin",
+    "README.md",
+    "LICENSE"
+  ],
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "clean": "rimraf dist",
+    "prebuild": "npm run clean",
+    "prepublishOnly": "npm run build",
+    "test": "tsx src/cli/cli.ts",
+    "test:watch": "tsx src/cli/cli.ts --watch"
+  },
+  "devDependencies": {
+    "@types/node": "^20.14.0",
+    "rimraf": "^5.0.7",
+    "tsx": "^4.16.0",
+    "typescript": "^5.5.0"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}
