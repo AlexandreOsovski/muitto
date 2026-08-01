@@ -1,4 +1,5 @@
 import type { Matchers, SnapshotOptions, MockFn } from "./types.js";
+import { matchSnapshot } from "./core/snapshots.js";
 
 /**
  * Specialized error for assertion failures in tests
@@ -822,38 +823,26 @@ function makeMatchers<T>(actual: T, isNot: boolean): Matchers<T> {
     /**
      * Checks if the value matches the stored snapshot
      *
-     * On first run, saves the snapshot.
-     * On subsequent runs, compares with the saved snapshot.
-     * Use --update-snapshots to update.
+     * Snapshots are persisted to a `.snap` file under `__snapshots__/` next
+     * to the test file (via core/snapshots.ts, the same store used by
+     * expectSnapshot()), so this compares against previous runs/commits.
+     * On first run, saves the snapshot. Use --update-snapshots (or
+     * `options.update` for just this call) to overwrite it instead.
      *
      * @param {SnapshotOptions} [options] - Snapshot options
      * @param {string} [options.name] - Snapshot name
-     * @param {boolean} [options.update] - Whether to update the snapshot
+     * @param {boolean} [options.update] - Whether to update just this snapshot
      */
     toMatchSnapshot(options?: SnapshotOptions) {
-      const snapshots =
-        (globalThis as any).__MUITTO_SNAPSHOTS__ || new Map<string, string>();
-      const key = options?.name || `snapshot_${snapshots.size}`;
       const serialized = stringify(actual);
+      const result = matchSnapshot(serialized, options?.name, options?.update);
 
-      if (options?.update) {
-        snapshots.set(key, serialized);
-        return;
-      }
-
-      if (snapshots.has(key)) {
-        const existing = snapshots.get(key);
-        assert(
-          existing === serialized,
-          `Snapshot "${key}" does not match:\nExpected:\n${existing}\nReceived:\n${serialized}`,
-          `Snapshot "${key}" matches unexpectedly`,
-          existing
-        );
-      } else {
-        snapshots.set(key, serialized);
-      }
-
-      (globalThis as any).__MUITTO_SNAPSHOTS__ = snapshots;
+      assert(
+        result.pass,
+        `Snapshot "${result.key}" does not match:\nExpected:\n${result.expected}\nReceived:\n${serialized}`,
+        `Snapshot "${result.key}" matches unexpectedly`,
+        result.expected
+      );
     },
 
     // ============================

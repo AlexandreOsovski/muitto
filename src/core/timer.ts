@@ -90,7 +90,7 @@ export class PerformanceTimer {
     if (startMark) {
       const markTime = this.marks.get(startMark);
       // Returns 0 if the marker doesn't exist
-      if (!markTime) return 0;
+      if (markTime === undefined) return 0;
       return performance.now() - markTime;
     }
     return performance.now() - this.startTime;

@@ -1,5 +1,4 @@
 import { watch as fsWatch } from "node:fs";
-import { resolve } from "node:path";
 import { color, divider } from "../colors.js";
 import { runTests } from "../core/runner.js";
 import type { RunOptions } from "../core/runner.js";
@@ -15,6 +14,12 @@ import type { RunOptions } from "../core/runner.js";
 interface WatchOptions extends RunOptions {
   /** Debounce time in milliseconds before re-running tests after a change */
   debounceMs?: number;
+  /**
+   * When set, called before each run to refresh the file list. Provided by
+   * the CLI only when the original invocation relied on auto-discovery, so
+   * newly created test files are picked up without restarting watch mode.
+   */
+  rediscover?: () => string[];
 }
 
 /**
@@ -52,16 +57,13 @@ export async function watchMode(options: WatchOptions): Promise<void> {
   /** Flag to control whether this is the first run */
   let isFirstRun = true;
 
-  // Determine which directories to watch
-  const watchDirs = new Set<string>();
-
-  if (options.files && options.files.length > 0) {
-    for (const file of options.files) {
-      watchDirs.add(resolve(file));
-    }
-  } else {
-    watchDirs.add(process.cwd());
-  }
+  /**
+   * Always watches the whole project directory, not just the discovered
+   * test files. Watching individual test file paths would mean a change
+   * to the source file under test (e.g. src/foo.ts) never triggers a
+   * re-run — only editing the test file itself would.
+   */
+  const watchDirs = new Set<string>([process.cwd()]);
 
   /**
    * Runs the tests and manages execution state
@@ -84,7 +86,12 @@ export async function watchMode(options: WatchOptions): Promise<void> {
     isRunning = true;
 
     try {
-      await runTests(options);
+      // Refreshes the file list when relying on auto-discovery, so newly
+      // added/removed test files are picked up without restarting watch mode
+      const currentOptions = options.rediscover
+        ? { ...options, files: options.rediscover() }
+        : options;
+      await runTests(currentOptions);
     } catch (error) {
       console.error(color.red("Error running tests:"), error);
     } finally {

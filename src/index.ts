@@ -1,5 +1,6 @@
 import type { TestCase, TestFn, HookFn } from "./types.js";
 import { expect } from "./assert.js";
+import { matchSnapshot } from "./core/snapshots.js";
 
 // ---------------------------------------------------------------------------
 // Internal state of the test file being loaded.
@@ -533,17 +534,17 @@ export function fail(message?: string): never {
 }
 
 // ---------------------------------------------------------------------------
-// Snapshot testing (basic)
+// Snapshot testing
 // ---------------------------------------------------------------------------
-
-/** Internal snapshot storage */
-const snapshots = new Map<string, string>();
 
 /**
  * Checks if a value matches the stored snapshot
  *
- * On first run, saves the snapshot.
- * On subsequent runs, compares with the saved value.
+ * Snapshots are persisted to a `.snap` file under `__snapshots__/` next to
+ * the test file (via core/snapshots.ts), so this compares against previous
+ * runs/commits, not just earlier calls within the same process. On first
+ * run (or with --update-snapshots), the snapshot is written/updated instead
+ * of compared.
  *
  * @param {unknown} value - Value to be compared with the snapshot
  * @param {string} [name] - Optional name for the snapshot
@@ -556,16 +557,13 @@ const snapshots = new Map<string, string>();
  * });
  */
 export function expectSnapshot(value: unknown, name?: string): void {
-  const key = name || `${currentSuiteKey()} > snapshot_${snapshots.size}`;
   const serialized = JSON.stringify(value, null, 2);
+  const result = matchSnapshot(serialized, name);
 
-  if (snapshots.has(key)) {
-    const existing = snapshots.get(key);
-    if (existing !== serialized) {
-      throw new Error(`Snapshot "${key}" does not match:\nExpected:\n${existing}\nReceived:\n${serialized}`);
-    }
-  } else {
-    snapshots.set(key, serialized);
+  if (!result.pass) {
+    throw new Error(
+      `Snapshot "${result.key}" does not match:\nExpected:\n${result.expected}\nReceived:\n${serialized}`
+    );
   }
 }
 

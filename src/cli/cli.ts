@@ -32,20 +32,20 @@ interface CliArgs {
   files: string[];
   /** Enables watch mode (file change observation) */
   watch: boolean;
-  /** Enables code coverage report */
-  coverage: boolean;
+  /** Enables code coverage report (only set when --coverage was passed, so config files aren't overridden) */
+  coverage?: boolean;
   /** Filter by test/suite name */
   grep?: string;
-  /** Reporter name to use (default, dot, verbose, json, junit) */
-  reporter: string;
+  /** Reporter name to use (default, dot, verbose, json, junit); only set when --reporter was passed */
+  reporter?: string;
   /** Destination file for reporters that support file output (json, junit) */
   outputFile?: string;
-  /** Updates existing snapshots */
-  updateSnapshots: boolean;
-  /** Timeout in milliseconds for each test */
-  timeoutMs: number;
-  /** Stops execution on the first failing test */
-  bail: boolean;
+  /** Updates existing snapshots; only set when --update-snapshots was passed */
+  updateSnapshots?: boolean;
+  /** Timeout in milliseconds for each test; only set when --timeout was passed */
+  timeoutMs?: number;
+  /** Stops execution on the first failing test; only set when --bail was passed */
+  bail?: boolean;
   /** Shows help menu */
   help: boolean;
   /** Shows framework version */
@@ -65,14 +65,15 @@ interface CliArgs {
  * // Returns: { files: ['test.js'], watch: true, timeoutMs: 10000, ... }
  */
 function parseArgs(argv: string[]): CliArgs {
+  /**
+   * coverage/reporter/timeoutMs/bail are intentionally left unset here.
+   * They must stay `undefined` unless the matching flag is actually passed,
+   * so that .muittorc.json / package.json config isn't clobbered by a
+   * hardcoded CLI default further down the pipeline (see loadConfig).
+   */
   const args: CliArgs = {
     files: [],
     watch: false,
-    coverage: false,
-    reporter: "default",
-    updateSnapshots: false,
-    timeoutMs: 5000,
-    bail: false,
     help: false,
     version: false,
     showPatterns: false,
@@ -215,6 +216,7 @@ async function main(): Promise<void> {
     coverage: args.coverage,
     grep: args.grep,
     bail: args.bail,
+    updateSnapshots: args.updateSnapshots,
   });
 
   // Get test files (auto-discovery or explicit)
@@ -260,11 +262,18 @@ async function main(): Promise<void> {
     filter: config.grep,
     reporter,
     bail: config.bail,
+    coverage: config.coverage,
+    updateSnapshots: config.updateSnapshots,
   };
 
   // Watch mode
   if (args.watch) {
-    await watchMode(runOptions);
+    // Only rediscover files on each run when the user relied on auto-discovery;
+    // an explicit file/dir list on the command line stays fixed for the session.
+    const rediscover = args.files.length === 0
+      ? () => getTestFiles(config, cwd)
+      : undefined;
+    await watchMode({ ...runOptions, rediscover });
     return;
   }
 

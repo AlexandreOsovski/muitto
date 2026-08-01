@@ -38,6 +38,8 @@ export interface LoadOptions {
   grep?: string;
   /** Stop on first failure */
   bail?: boolean;
+  /** Overwrite snapshots instead of comparing them */
+  updateSnapshots?: boolean;
 }
 
 /**
@@ -124,15 +126,26 @@ export function loadConfig(cwd: string, options: LoadOptions = {}): TestConfig &
   const rcConfig = loadFromRcFile(cwd);
   Object.assign(config, rcConfig);
 
+  /**
+   * Only options explicitly provided by the caller should override
+   * file-based config. Object spread copies a key even when its value
+   * is `undefined`, which would otherwise silently wipe out values
+   * loaded from .muittorc.json / package.json whenever a caller builds
+   * an options object with all keys present (e.g. the CLI or runTests()).
+   */
+  const definedOptions = Object.fromEntries(
+    Object.entries(options).filter(([, value]) => value !== undefined)
+  );
+
   // Start with config and add options
   const result: any = {
     ...config,
-    ...options
+    ...definedOptions
   };
 
   // Ensure pattern is always an array
-  if (options.pattern) {
-    result.pattern = Array.isArray(options.pattern) ? options.pattern : [options.pattern];
+  if (definedOptions.pattern) {
+    result.pattern = Array.isArray(definedOptions.pattern) ? definedOptions.pattern : [definedOptions.pattern];
   }
 
   return result as TestConfig & LoadOptions;

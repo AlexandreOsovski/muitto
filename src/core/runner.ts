@@ -1,7 +1,5 @@
 import { resolve } from "node:path";
 import { pathToFileURL } from "node:url";
-import { readdirSync, statSync } from "node:fs";
-import { join } from "node:path";
 import { __getRegistry } from "../index.js";
 import type { TestCase, TestResult, FileResult, RunSummary } from "../types.js";
 import type { Reporter } from "../reporters/base.js";
@@ -9,14 +7,18 @@ import { DefaultReporter } from "../reporters/default.js";
 import { ResultCollector } from "./collector.js";
 import { PerformanceTimer } from "./timer.js";
 import { loadConfig, getTestFiles, type LoadOptions } from "../config/loader.js";
+import { setSnapshotContext, setUpdateMode, flushSnapshots } from "./snapshots.js";
 
-/** Regex pattern to identify test files (fallback) */
-const DEFAULT_PATTERN = /\.(test|spec)\.(ts|js|mjs|cjs)$/;
-
-/** Directories ignored during file discovery */
-const IGNORED_DIRS = new Set([
-  "node_modules", "dist", ".git", "coverage", "build", ".next", ".nuxt"
-]);
+/**
+ * Real, un-mockable timer references captured at module load time — before
+ * any test file has had a chance to run. `useFakeTimers()` replaces
+ * `globalThis.setTimeout`/`clearTimeout`, and if a test enables fake timers
+ * without restoring them (e.g. it throws before calling `restore()`), the
+ * runner's own per-test timeout must keep working, or a hanging test would
+ * never time out instead of failing with "Test timeout".
+ */
+const REAL_SET_TIMEOUT = globalThis.setTimeout.bind(globalThis);
+const REAL_CLEAR_TIMEOUT = globalThis.clearTimeout.bind(globalThis);
 
 /**
  * Interface that defines the test execution options
@@ -76,7 +78,8 @@ export async function runTests(options: RunOptions = {}): Promise<RunSummary> {
     reporter: options.reporter ? options.reporter.name : undefined,
     coverage: options.coverage,
     grep: options.grep || options.filter,
-    bail: options.bail
+    bail: options.bail,
+    updateSnapshots: options.updateSnapshots
   };
 
   const config = loadConfig(cwd, loadOptions);
@@ -87,6 +90,14 @@ export async function runTests(options: RunOptions = {}): Promise<RunSummary> {
 
   const timeoutMs = options.timeout ?? config.timeout ?? 5000;
   const filter = options.filter ?? options.grep ?? config.grep ?? "";
+
+  setUpdateMode(options.updateSnapshots ?? config.updateSnapshots ?? false);
+
+  if (config.coverage) {
+    console.log(
+      "[muitto] --coverage was requested, but code coverage instrumentation is not implemented yet. No coverage report will be generated."
+    );
+  }
 
   // Get test files (auto-discovery or explicit)
   let files = options.files || [];
@@ -122,6 +133,7 @@ export async function runTests(options: RunOptions = {}): Promise<RunSummary> {
       bail: options.bail
     });
     collector.addFileResult(result);
+    flushSnapshots(file);
 
     reporter.onFileEnd?.(result);
 
@@ -186,14 +198,20 @@ async function runSingleFile(
      */
     const moduleUrl = `${fileUrl}?t=${Date.now()}-${Math.random()}`;
     await import(moduleUrl);
-
-    // Extracts tests and hooks from the global registry and clears for the next file
+  } catch (err) {
+    collectError = err;
+  } finally {
+    /**
+     * Always drains the global registry, even when import() threw partway
+     * through the file (e.g. after some describe/it calls already ran at
+     * module top-level). Otherwise those leftover tests/hooks stay in the
+     * shared registry and leak into the NEXT file's collection, getting
+     * mislabeled with the next file's path.
+     */
     const reg = __getRegistry();
     tests = reg.tests.splice(0, reg.tests.length).map((t: TestCase) => ({ ...t, filePath }));
     hooksBySuiteKey = new Map(reg.hooksBySuiteKey);
     reg.hooksBySuiteKey.clear();
-  } catch (err) {
-    collectError = err;
   }
 
   // If there was a collection error, returns result with error
@@ -299,6 +317,7 @@ async function executeTests(
 
     // Runs the individual test
     options.reporter.onTestStart?.(test);
+    setSnapshotContext(test.filePath, `${suiteKey} > ${test.name}`);
 
     const testTimer = new PerformanceTimer();
     testTimer.start();
@@ -397,7 +416,8 @@ function withTimeout(
 ): Promise<void> {
   return new Promise((resolve, reject) => {
     // Sets up timer that will reject the promise after the time limit
-    const timer = setTimeout(() => {
+    // Uses the real timer functions, immune to useFakeTimers() mocking globalThis
+    const timer = REAL_SET_TIMEOUT(() => {
       reject(new Error(`Test timeout: exceeded ${ms}ms`));
     }, ms);
 
@@ -408,103 +428,18 @@ function withTimeout(
     Promise.resolve()
       .then(fn)
       .then(() => {
-        clearTimeout(timer);
+        REAL_CLEAR_TIMEOUT(timer);
         resolve();
       })
       .catch((err) => {
-        clearTimeout(timer);
+        REAL_CLEAR_TIMEOUT(timer);
         reject(err);
       });
   });
 }
 
 /**
- * Recursively discovers test files in a directory
- *
- * Discovery algorithm:
- * 1. First looks for common test directories (test, tests, __tests__, spec, specs)
- * 2. If found, searches only within them
- * 3. If not found, searches recursively from the root
- * 4. Ignores common directories like node_modules, dist, .git, etc
- * 5. Filters files by the specified regex pattern
- *
- * @param {string} root - Root directory to start the search
- * @param {RegExp} pattern - Regex pattern to identify test files
- * @returns {string[]} Sorted array with absolute paths of found files
- *
- * @example
- * const files = discoverTestFiles('./src', /\.test\.ts$/);
- * // ['/project/src/utils.test.ts', '/project/src/api.test.ts']
- *
- * const allFiles = discoverTestFiles(process.cwd(), DEFAULT_PATTERN);
+ * Test file discovery lives in config/defaults.ts (findTestFiles), which is
+ * pattern-driven (respects config.pattern/testMatch) and is the single
+ * implementation used by both the CLI and the programmatic API.
  */
-export function discoverTestFiles(root: string, pattern: RegExp): string[] {
-  const found: string[] = [];
-
-  /**
-   * Internal recursive function to traverse directories
-   *
-   * @param {string} dir - Current directory being traversed
-   */
-  function walk(dir: string): void {
-    let entries: string[];
-    try {
-      entries = readdirSync(dir);
-    } catch {
-      // Ignores directories without read permission
-      return;
-    }
-
-    for (const entry of entries) {
-      // Skips ignored directories
-      if (IGNORED_DIRS.has(entry)) continue;
-
-      const fullPath = join(dir, entry);
-      let stat;
-      try {
-        stat = statSync(fullPath);
-      } catch {
-        // Ignores inaccessible files (broken symlinks, permissions, etc)
-        continue;
-      }
-
-      if (stat.isDirectory()) {
-        walk(fullPath);
-      } else if (stat.isFile() && pattern.test(entry)) {
-        found.push(fullPath);
-      }
-    }
-  }
-
-  /**
-   * List of common test directories to look for
-   * Follows popular conventions from various frameworks and communities
-   */
-  const testDirs = ["test", "tests", "__tests__", "spec", "specs"];
-  let foundTestDir = false;
-
-  // Searches first in standardized test directories
-  for (const dir of testDirs) {
-    const fullPath = join(root, dir);
-    try {
-      if (statSync(fullPath).isDirectory()) {
-        walk(fullPath);
-        foundTestDir = true;
-      }
-    } catch {
-      // Directory doesn't exist, continues to the next
-    }
-  }
-
-  /**
-   * If no standardized test directory was found,
-   * performs recursive search from the root (useful for projects
-   * that place tests alongside source code)
-   */
-  if (!foundTestDir) {
-    walk(root);
-  }
-
-  // Returns sorted files for deterministic execution
-  return found.sort();
-}
