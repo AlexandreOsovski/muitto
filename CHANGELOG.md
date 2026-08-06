@@ -5,7 +5,7 @@ All notable changes to this project are documented in this file.
 
 ---
 
-## [1.4.11] — 2026-08-01
+## [1.4.13] — 2026-08-04
 
 ### English
 
