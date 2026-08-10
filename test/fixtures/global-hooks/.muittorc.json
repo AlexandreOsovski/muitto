@@ -1,0 +1,4 @@
+{
+  "globalSetup": "./global-setup.ts",
+  "globalTeardown": "./global-teardown.ts"
+}

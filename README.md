@@ -238,9 +238,13 @@ Optional. Create `.muittorc.json` at your project root:
   "timeout": 10000,
   "reporter": "verbose",
   "bail": false,
-  "updateSnapshots": false
+  "updateSnapshots": false,
+  "globalSetup": "./test/global-setup.ts",
+  "globalTeardown": "./test/global-teardown.ts"
 }
 ```
+
+`globalSetup` / `globalTeardown` point at a module (resolved relative to the project root) whose **default export** is a `() => void | Promise<void>` function, run once for the entire run — before any test file and after every test file, respectively — useful for things like spinning up a shared test database once instead of per-suite.
 
 Or use the `"muitto"` key in `package.json`:
 
@@ -267,7 +271,7 @@ Config precedence: **CLI flags** → **`.muittorc.json`** → **`package.json`**
 | `--timeout <ms>` | `-t` | Test timeout (default: 5000) |
 | `--bail` | | Stop on first failure |
 | `--show-patterns` | | List discovery patterns |
-| `--coverage` | | Not implemented yet — prints a warning |
+| `--coverage` | | Generate a code coverage report |
 | `--help` | `-h` | Show help |
 | `--version` | `-v` | Show version |
 
@@ -285,6 +289,41 @@ Config precedence: **CLI flags** → **`.muittorc.json`** → **`package.json`**
 muitto --reporter junit --output ./junit.xml
 muitto --reporter json --output ./report.json
 ```
+
+## Coverage
+
+```bash
+muitto --coverage
+```
+
+Coverage is measured with Node's built-in `node:inspector` Profiler (precise, block-level V8 coverage) — no `istanbul`/`nyc`/`c8` dependency, keeping MUITTO's zero-runtime-dependency guarantee. It tracks execution across the whole run, then reports:
+
+- **Lines** — which lines actually ran
+- **Statements** — currently approximated with line coverage
+- **Functions** — which named functions were called at least once
+- **Branches** — an approximation derived from V8's nested block ranges (not a full AST-based branch analysis — see the comment in `src/core/coverage.ts` for details)
+
+Files under `node_modules/`, `dist/`, `.git/`, `coverage/`, `build/`, `.next/`, `.nuxt/`, and the test files themselves are excluded — coverage measures the code *under* test.
+
+Running `--coverage` prints a per-file summary table to the terminal and writes a machine-readable report to `coverage/coverage-summary.json` (relative to your project root), so CI can consume it directly:
+
+```
+──────────────────────────────────────────────────
+Coverage Summary
+──────────────────────────────────────────────────
+
+  File           Lines    Funcs
+  -----------   ------   ------
+  src/calc.ts    66.7%    66.7%
+
+All files
+  Lines:       66.7%  (8/12)
+  Statements:  66.7%  (8/12)
+  Functions:   66.7%  (2/3)
+  Branches:     0.0%  (0/1) (approximate)
+```
+
+Without `--coverage`, none of this runs — no `coverage/` directory is created and there's no extra output or overhead.
 
 ## How It Works
 
@@ -587,9 +626,13 @@ Opcional. Crie um `.muittorc.json` na raiz do projeto:
   "timeout": 10000,
   "reporter": "verbose",
   "bail": false,
-  "updateSnapshots": false
+  "updateSnapshots": false,
+  "globalSetup": "./test/global-setup.ts",
+  "globalTeardown": "./test/global-teardown.ts"
 }
 ```
+
+`globalSetup` / `globalTeardown` apontam para um módulo (resolvido em relação à raiz do projeto) cuja **exportação padrão** é uma função `() => void | Promise<void>`, executada uma única vez para toda a execução — antes de qualquer arquivo de teste e depois de todos os arquivos de teste, respectivamente — útil para coisas como subir um banco de dados de teste compartilhado uma única vez em vez de por suíte.
 
 Ou use a chave `"muitto"` no `package.json`:
 
@@ -616,7 +659,7 @@ Precedência de configuração: **flags de CLI** → **`.muittorc.json`** → **
 | `--timeout <ms>` | `-t` | Timeout por teste (padrão: 5000) |
 | `--bail` | | Interrompe na primeira falha |
 | `--show-patterns` | | Lista os padrões de descoberta |
-| `--coverage` | | Ainda não implementado — exibe um aviso |
+| `--coverage` | | Gera um relatório de cobertura de código |
 | `--help` | `-h` | Mostra ajuda |
 | `--version` | `-v` | Mostra a versão |
 
@@ -634,6 +677,41 @@ Precedência de configuração: **flags de CLI** → **`.muittorc.json`** → **
 muitto --reporter junit --output ./junit.xml
 muitto --reporter json --output ./report.json
 ```
+
+## Cobertura
+
+```bash
+muitto --coverage
+```
+
+A cobertura é medida com o Profiler nativo do `node:inspector` (cobertura precisa do V8, no nível de bloco) — sem dependência de `istanbul`/`nyc`/`c8`, preservando a garantia de zero dependências em runtime do MUITTO. Ela acompanha a execução ao longo de toda a rodada e reporta:
+
+- **Linhas** — quais linhas realmente rodaram
+- **Statements** — atualmente aproximado pela cobertura de linhas
+- **Funções** — quais funções nomeadas foram chamadas pelo menos uma vez
+- **Branches** — uma aproximação derivada dos ranges de bloco aninhados do V8 (não é uma análise de branch baseada em AST completa — veja o comentário em `src/core/coverage.ts` para detalhes)
+
+Arquivos em `node_modules/`, `dist/`, `.git/`, `coverage/`, `build/`, `.next/`, `.nuxt/`, e os próprios arquivos de teste são excluídos — a cobertura mede o código *sob* teste.
+
+Rodar `--coverage` imprime uma tabela resumo por arquivo no terminal e grava um relatório legível por máquina em `coverage/coverage-summary.json` (relativo à raiz do projeto), para que o CI possa consumi-lo diretamente:
+
+```
+──────────────────────────────────────────────────
+Coverage Summary
+──────────────────────────────────────────────────
+
+  File           Lines    Funcs
+  -----------   ------   ------
+  src/calc.ts    66.7%    66.7%
+
+All files
+  Lines:       66.7%  (8/12)
+  Statements:  66.7%  (8/12)
+  Functions:   66.7%  (2/3)
+  Branches:     0.0%  (0/1) (approximate)
+```
+
+Sem `--coverage`, nada disso roda — nenhum diretório `coverage/` é criado e não há saída ou custo extra.
 
 ## Como funciona
 

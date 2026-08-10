@@ -1,0 +1,3 @@
+{
+  "globalTeardown": "./global-teardown-throws.ts"
+}

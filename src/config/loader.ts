@@ -40,6 +40,10 @@ export interface LoadOptions {
   bail?: boolean;
   /** Overwrite snapshots instead of comparing them */
   updateSnapshots?: boolean;
+  /** Path to a module run once before any test file (see {@link TestConfig.globalSetup}) */
+  globalSetup?: string;
+  /** Path to a module run once after all test files (see {@link TestConfig.globalTeardown}) */
+  globalTeardown?: string;
 }
 
 /**

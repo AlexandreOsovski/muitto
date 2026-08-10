@@ -1,0 +1,3 @@
+{
+  "globalSetup": "./global-setup-throws.ts"
+}

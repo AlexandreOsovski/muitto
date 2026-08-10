@@ -5,6 +5,24 @@ All notable changes to this project are documented in this file.
 
 ---
 
+## [1.5.0] — 2026-08-09
+
+### English
+
+#### Added
+
+- **Real code coverage** — `--coverage` now actually instruments and reports coverage instead of printing a "not implemented" notice. Implemented with Node's built-in `node:inspector` Profiler (precise, block-level V8 coverage) — no `istanbul`/`nyc`/`c8` dependency, keeping the zero-runtime-dependency guarantee. Reports line, statement (approximated from line data), function, and branch (approximated from V8's nested block ranges) coverage. Prints a per-file summary table to the terminal and writes a machine-readable `coverage/coverage-summary.json` for CI. Files under `node_modules/`, `dist/`, `.git/`, `coverage/`, `build/`, `.next/`, `.nuxt/`, and the test files themselves are excluded, so only the code under test is measured.
+- `CoverageReport`/`CoverageMetric`/`FileCoverage` types (`src/types.ts`) now describe the real shape produced by the new coverage engine, replacing the previously-unused placeholder `CoverageReport` interface.
+- **`globalSetup` / `globalTeardown`** — new config-only (`.muittorc.json` / the `"muitto"` key in `package.json`) options for hooks that run once for the **entire run**, across all test files, instead of being scoped to a single `describe` block like `beforeAll`/`afterAll`. Each is a file path (resolved relative to the project root) whose default export is a `() => void | Promise<void>` function, dynamically imported and called once — useful for spinning up a shared test database or server before any test runs, and tearing it down after the last one finishes. If `globalSetup` throws, the whole run aborts immediately and zero test files run. If `globalTeardown` throws, the run fails (non-zero exit) even if every test passed, though the test results are still reported first. `--show-patterns` now also prints the configured paths, if any.
+
+### Português
+
+#### Adicionado
+
+- **Cobertura de código de verdade** — `--coverage` agora de fato instrumenta e reporta cobertura, em vez de exibir um aviso de "não implementado". Implementado com o Profiler nativo do `node:inspector` (cobertura precisa do V8, no nível de bloco) — sem dependência de `istanbul`/`nyc`/`c8`, preservando a garantia de zero dependências em runtime. Reporta cobertura de linhas, statements (aproximado a partir dos dados de linha), funções e branches (aproximado a partir dos ranges de bloco aninhados do V8). Imprime uma tabela resumo por arquivo no terminal e grava um `coverage/coverage-summary.json` legível por máquina para o CI. Arquivos em `node_modules/`, `dist/`, `.git/`, `coverage/`, `build/`, `.next/`, `.nuxt/`, e os próprios arquivos de teste são excluídos, de forma que só o código sob teste é medido.
+- Os tipos `CoverageReport`/`CoverageMetric`/`FileCoverage` (`src/types.ts`) agora descrevem o formato real produzido pelo novo motor de cobertura, substituindo a interface `CoverageReport` anterior, que era apenas um placeholder não utilizado.
+- **`globalSetup` / `globalTeardown`** — novas opções, disponíveis apenas via arquivo de configuração (`.muittorc.json` / chave `"muitto"` no `package.json`), para hooks que rodam uma única vez para **toda a execução**, através de todos os arquivos de teste, em vez de ficarem restritos a um único bloco `describe` como `beforeAll`/`afterAll`. Cada uma é um caminho de arquivo (resolvido em relação à raiz do projeto) cuja exportação padrão é uma função `() => void | Promise<void>`, importada dinamicamente e chamada uma única vez — útil para subir um banco de dados ou servidor de teste compartilhado antes de qualquer teste rodar, e derrubá-lo depois que o último terminar. Se `globalSetup` lançar um erro, a execução inteira é abortada imediatamente e nenhum arquivo de teste roda. Se `globalTeardown` lançar um erro, a execução falha (código de saída diferente de zero) mesmo que todos os testes tenham passado, embora os resultados dos testes ainda sejam reportados primeiro. `--show-patterns` agora também exibe os caminhos configurados, se houver.
+
 ## [1.4.11] — 2026-08-01
 
 ### English

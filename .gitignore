@@ -1,11 +1,9 @@
-__tests__
 .git
 dist
 node_modules
 .github
 tsconfig.json
-*.test.ts
-*.spec.ts
 .editorconfig
 .vscode
 dist/
+coverage/
