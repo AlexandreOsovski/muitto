@@ -23,7 +23,7 @@ All notable changes to this project are documented in this file.
 - Os tipos `CoverageReport`/`CoverageMetric`/`FileCoverage` (`src/types.ts`) agora descrevem o formato real produzido pelo novo motor de cobertura, substituindo a interface `CoverageReport` anterior, que era apenas um placeholder não utilizado.
 - **`globalSetup` / `globalTeardown`** — novas opções, disponíveis apenas via arquivo de configuração (`.muittorc.json` / chave `"muitto"` no `package.json`), para hooks que rodam uma única vez para **toda a execução**, através de todos os arquivos de teste, em vez de ficarem restritos a um único bloco `describe` como `beforeAll`/`afterAll`. Cada uma é um caminho de arquivo (resolvido em relação à raiz do projeto) cuja exportação padrão é uma função `() => void | Promise<void>`, importada dinamicamente e chamada uma única vez — útil para subir um banco de dados ou servidor de teste compartilhado antes de qualquer teste rodar, e derrubá-lo depois que o último terminar. Se `globalSetup` lançar um erro, a execução inteira é abortada imediatamente e nenhum arquivo de teste roda. Se `globalTeardown` lançar um erro, a execução falha (código de saída diferente de zero) mesmo que todos os testes tenham passado, embora os resultados dos testes ainda sejam reportados primeiro. `--show-patterns` agora também exibe os caminhos configurados, se houver.
 
-## [1.4.11] — 2026-08-01
+## [1.4.13] — 2026-08-04
 
 ### English
 
