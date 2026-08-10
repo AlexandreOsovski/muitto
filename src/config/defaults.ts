@@ -32,6 +32,21 @@ export interface TestConfig {
   coverage: boolean;
   /** Whether to overwrite snapshots instead of comparing them */
   updateSnapshots: boolean;
+  /**
+   * Path (relative to cwd) to a module whose default export is run once,
+   * before any test file, for the entire run — e.g. spinning up a shared
+   * test database or server. JSON config can't embed a live function, so
+   * (like Jest/Vitest) this is a file path that the runner dynamically
+   * `import()`s. Undefined/omitted means no global setup runs.
+   */
+  globalSetup?: string;
+  /**
+   * Path (relative to cwd) to a module whose default export is run once,
+   * after every test file has finished (or after a `bail`-triggered early
+   * stop), for the entire run — the counterpart to {@link globalSetup}.
+   * Undefined/omitted means no global teardown runs.
+   */
+  globalTeardown?: string;
 }
 
 /**

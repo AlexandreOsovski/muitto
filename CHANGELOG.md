@@ -5,6 +5,20 @@ All notable changes to this project are documented in this file.
 
 ---
 
+## [1.5.0] — 2026-08-09
+
+### English
+
+#### Added
+
+- **`globalSetup` / `globalTeardown`** — new config-only (`.muittorc.json` / the `"muitto"` key in `package.json`) options for hooks that run once for the **entire run**, across all test files, instead of being scoped to a single `describe` block like `beforeAll`/`afterAll`. Each is a file path (resolved relative to the project root) whose default export is a `() => void | Promise<void>` function, dynamically imported and called once — useful for spinning up a shared test database or server before any test runs, and tearing it down after the last one finishes. If `globalSetup` throws, the whole run aborts immediately and zero test files run. If `globalTeardown` throws, the run fails (non-zero exit) even if every test passed, though the test results are still reported first. `--show-patterns` now also prints the configured paths, if any.
+
+### Português
+
+#### Adicionado
+
+- **`globalSetup` / `globalTeardown`** — novas opções, disponíveis apenas via arquivo de configuração (`.muittorc.json` / chave `"muitto"` no `package.json`), para hooks que rodam uma única vez para **toda a execução**, através de todos os arquivos de teste, em vez de ficarem restritos a um único bloco `describe` como `beforeAll`/`afterAll`. Cada uma é um caminho de arquivo (resolvido em relação à raiz do projeto) cuja exportação padrão é uma função `() => void | Promise<void>`, importada dinamicamente e chamada uma única vez — útil para subir um banco de dados ou servidor de teste compartilhado antes de qualquer teste rodar, e derrubá-lo depois que o último terminar. Se `globalSetup` lançar um erro, a execução inteira é abortada imediatamente e nenhum arquivo de teste roda. Se `globalTeardown` lançar um erro, a execução falha (código de saída diferente de zero) mesmo que todos os testes tenham passado, embora os resultados dos testes ainda sejam reportados primeiro. `--show-patterns` agora também exibe os caminhos configurados, se houver.
+
 ## [1.4.11] — 2026-08-01
 
 ### English

@@ -6,6 +6,9 @@ node_modules
 tsconfig.json
 *.test.ts
 *.spec.ts
+# Real regression coverage (not a scratch/manual-testing file) — tracked
+# despite the blanket *.test.ts ignore above.
+!/test/config-global-hooks.test.ts
 .editorconfig
 .vscode
 dist/

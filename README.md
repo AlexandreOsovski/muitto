@@ -238,9 +238,13 @@ Optional. Create `.muittorc.json` at your project root:
   "timeout": 10000,
   "reporter": "verbose",
   "bail": false,
-  "updateSnapshots": false
+  "updateSnapshots": false,
+  "globalSetup": "./test/global-setup.ts",
+  "globalTeardown": "./test/global-teardown.ts"
 }
 ```
+
+`globalSetup` / `globalTeardown` point at a module (resolved relative to the project root) whose **default export** is a `() => void | Promise<void>` function, run once for the entire run — before any test file and after every test file, respectively — useful for things like spinning up a shared test database once instead of per-suite.
 
 Or use the `"muitto"` key in `package.json`:
 
@@ -587,9 +591,13 @@ Opcional. Crie um `.muittorc.json` na raiz do projeto:
   "timeout": 10000,
   "reporter": "verbose",
   "bail": false,
-  "updateSnapshots": false
+  "updateSnapshots": false,
+  "globalSetup": "./test/global-setup.ts",
+  "globalTeardown": "./test/global-teardown.ts"
 }
 ```
+
+`globalSetup` / `globalTeardown` apontam para um módulo (resolvido em relação à raiz do projeto) cuja **exportação padrão** é uma função `() => void | Promise<void>`, executada uma única vez para toda a execução — antes de qualquer arquivo de teste e depois de todos os arquivos de teste, respectivamente — útil para coisas como subir um banco de dados de teste compartilhado uma única vez em vez de por suíte.
 
 Ou use a chave `"muitto"` no `package.json`:
 

@@ -449,10 +449,19 @@ export interface MuittoConfig {
   maxConcurrency?: number;
   /** Array of reporter instances */
   reporters?: Reporter[];
-  /** Function executed once before all tests */
-  globalSetup?: () => void | Promise<void>;
-  /** Function executed once after all tests */
-  globalTeardown?: () => void | Promise<void>;
+  /**
+   * Path to a module (resolved relative to cwd) whose default export runs
+   * once before any test file. JSON config can't embed a live function, so
+   * (like Jest/Vitest) this is a file path, dynamically imported at run
+   * time — see the real, wired-up equivalent on {@link TestConfig} in
+   * `config/defaults.ts`.
+   */
+  globalSetup?: string;
+  /**
+   * Path to a module (resolved relative to cwd) whose default export runs
+   * once after all test files. See {@link globalSetup}.
+   */
+  globalTeardown?: string;
   /** Directory for storing snapshot files */
   snapshotDir?: string;
   /** Update existing snapshots instead of comparing */
