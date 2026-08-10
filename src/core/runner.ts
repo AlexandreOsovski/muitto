@@ -51,12 +51,14 @@ export interface RunOptions extends Omit<LoadOptions, 'reporter'> {
  * Main function of the test runner that coordinates the entire execution flow:
  * 1. Loads configuration from package.json and .muittorc.json
  * 2. Discovers test files automatically (if not specified)
- * 3. Initializes reporter and result collector
- * 4. Runs each test file sequentially
- * 5. Supports bail mode (stop on first error)
- * 6. Generates final results summary
+ * 3. Runs `globalSetup` once, if configured (aborts the whole run on failure)
+ * 4. Initializes reporter and result collector
+ * 5. Runs each test file sequentially
+ * 6. Supports bail mode (stop on first error)
  * 7. When `config.coverage` is true, prints and writes a V8-based code
  *    coverage report (see core/coverage.ts) covering the whole run
+ * 8. Generates final results summary
+ * 9. Runs `globalTeardown` once, if configured (fails the run on failure)
  *
  * @async
  * @param {RunOptions} [options={}] - Execution configuration options
@@ -74,6 +76,13 @@ export interface RunOptions extends Omit<LoadOptions, 'reporter'> {
  *   bail: true,
  *   reporter: new VerboseReporter()
  * });
+ *
+ * @example
+ * // With a shared test database spun up once for the whole run
+ * const summary = await runTests({
+ *   globalSetup: './test/global-setup.ts',
+ *   globalTeardown: './test/global-teardown.ts'
+ * });
  */
 export async function runTests(options: RunOptions = {}): Promise<RunSummary> {
   const cwd = process.cwd();
@@ -88,7 +97,9 @@ export async function runTests(options: RunOptions = {}): Promise<RunSummary> {
     coverage: options.coverage,
     grep: options.grep || options.filter,
     bail: options.bail,
-    updateSnapshots: options.updateSnapshots
+    updateSnapshots: options.updateSnapshots,
+    globalSetup: options.globalSetup,
+    globalTeardown: options.globalTeardown
   };
 
   const config = loadConfig(cwd, loadOptions);
@@ -101,13 +112,6 @@ export async function runTests(options: RunOptions = {}): Promise<RunSummary> {
   const filter = options.filter ?? options.grep ?? config.grep ?? "";
 
   setUpdateMode(options.updateSnapshots ?? config.updateSnapshots ?? false);
-
-  /**
-   * When coverage is requested, V8 must start tracking execution BEFORE
-   * any test file (or the code it imports) is loaded, otherwise the very
-   * first lines executed would be missed.
-   */
-  const coverageHandle = config.coverage ? await startCoverage() : undefined;
 
   // Get test files (auto-discovery or explicit)
   let files = options.files || [];
@@ -125,6 +129,39 @@ export async function runTests(options: RunOptions = {}): Promise<RunSummary> {
     config.pattern.forEach((p: string) => console.log(`  - ${p}`));
     process.exit(0);
   }
+
+  /**
+   * Global setup: runs once for the ENTIRE run, before any test file is
+   * imported or executed — e.g. spinning up a shared test database or
+   * server. Unlike `beforeAll`, this is not scoped to a `describe` block
+   * and does not re-run per file.
+   *
+   * If it throws, the whole run aborts immediately: zero test files are
+   * run, and the error propagates out of `runTests()` so callers (the CLI's
+   * `main().catch(...)`) see a non-zero exit code. There would be no sound
+   * way to report partial/summary results here since no tests ran at all.
+   */
+  if (config.globalSetup) {
+    try {
+      const setupFn = await loadGlobalHookModule(config.globalSetup, cwd, "globalSetup");
+      await setupFn();
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err);
+      console.error(`[muitto] globalSetup failed: ${message}`);
+      throw err;
+    }
+  }
+
+  /**
+   * When coverage is requested, V8 must start tracking execution BEFORE any
+   * test file (or the code it imports) is loaded, otherwise the very first
+   * lines executed would be missed. This intentionally happens AFTER
+   * `globalSetup` (rather than at the very top of the function): if
+   * `globalSetup` throws, the run aborts via the branch above before this
+   * line is ever reached, so there's no coverage session left dangling with
+   * no matching `stopCoverage()` call.
+   */
+  const coverageHandle = config.coverage ? await startCoverage() : undefined;
 
   collector.start();
   timer.start();
@@ -171,7 +208,73 @@ export async function runTests(options: RunOptions = {}): Promise<RunSummary> {
   const summary = collector.getSummary();
   reporter.onEnd?.(summary);
 
+  /**
+   * Global teardown: runs once for the ENTIRE run, after the file loop
+   * above finishes — whether it finished normally or stopped early via
+   * `bail`. It does NOT run if `globalSetup` itself failed (that branch
+   * already threw and returned control to the caller before any of this
+   * code is reached), since no tests ran and there's nothing to tear down.
+   *
+   * Design decision: like Jest, a failing globalTeardown fails the whole
+   * run (throws), even if every test passed — a broken teardown (e.g. a
+   * test database that won't shut down cleanly) is itself a signal
+   * something is wrong and CI should not go green on it. The summary is
+   * reported to the reporter first (above), so test results are still
+   * visible before the teardown failure aborts the process.
+   */
+  if (config.globalTeardown) {
+    try {
+      const teardownFn = await loadGlobalHookModule(config.globalTeardown, cwd, "globalTeardown");
+      await teardownFn();
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err);
+      console.error(`[muitto] globalTeardown failed: ${message}`);
+      throw err;
+    }
+  }
+
   return summary;
+}
+
+/**
+ * Dynamically imports a global hook module (`globalSetup`/`globalTeardown`)
+ * and returns its default export, validated to be a callable function.
+ *
+ * Config files (`.muittorc.json` / the `"muitto"` key in `package.json`)
+ * can't embed a live function, so `globalSetup`/`globalTeardown` are
+ * configured as file paths (like Jest/Vitest) whose *default export* is the
+ * actual hook function, dynamically imported at run time.
+ *
+ * Unlike `runSingleFile()`'s import of test files, this uses a plain
+ * `import()` with no cache-busting query string: each hook is meant to run
+ * exactly once per `runTests()` invocation, not react to source changes.
+ *
+ * @param {string} hookPath - Path to the module, resolved relative to `cwd`
+ * @param {string} cwd - Current working directory used to resolve relative paths
+ * @param {"globalSetup" | "globalTeardown"} kind - Which hook this is (used only to label error messages)
+ * @returns {Promise<() => void | Promise<void>>} The module's default export
+ *
+ * @example
+ * const setupFn = await loadGlobalHookModule('./test/global-setup.ts', process.cwd(), 'globalSetup');
+ * await setupFn();
+ */
+async function loadGlobalHookModule(
+  hookPath: string,
+  cwd: string,
+  kind: "globalSetup" | "globalTeardown"
+): Promise<() => void | Promise<void>> {
+  const resolvedPath = resolve(cwd, hookPath);
+  const moduleUrl = pathToFileURL(resolvedPath).href;
+  const mod: any = await import(moduleUrl);
+  const fn = mod?.default;
+
+  if (typeof fn !== "function") {
+    throw new Error(
+      `${kind} module "${hookPath}" (resolved to ${resolvedPath}) must have a default export that is a function`
+    );
+  }
+
+  return fn;
 }
 
 /**

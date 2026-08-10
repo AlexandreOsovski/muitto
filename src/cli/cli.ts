@@ -205,6 +205,12 @@ async function main(): Promise<void> {
     config.pattern.forEach((p: string) => console.log(`  ${color.green('✓')} ${p}`));
     console.log(color.dim(`\nTest timeout: ${config.timeout}ms`));
     console.log(color.dim(`Reporter: ${config.reporter}`));
+    if (config.globalSetup) {
+      console.log(color.dim(`Global setup: ${config.globalSetup}`));
+    }
+    if (config.globalTeardown) {
+      console.log(color.dim(`Global teardown: ${config.globalTeardown}`));
+    }
     process.exit(0);
   }
 
