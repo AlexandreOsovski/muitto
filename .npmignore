@@ -2,6 +2,7 @@
 src/
 *.ts
 !*.d.ts
+test/
 
 # Development files
 __tests__/
