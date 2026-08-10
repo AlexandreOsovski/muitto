@@ -5,6 +5,22 @@ All notable changes to this project are documented in this file.
 
 ---
 
+## [1.5.0] — 2026-08-09
+
+### English
+
+#### Added
+
+- **Real code coverage** — `--coverage` now actually instruments and reports coverage instead of printing a "not implemented" notice. Implemented with Node's built-in `node:inspector` Profiler (precise, block-level V8 coverage) — no `istanbul`/`nyc`/`c8` dependency, keeping the zero-runtime-dependency guarantee. Reports line, statement (approximated from line data), function, and branch (approximated from V8's nested block ranges) coverage. Prints a per-file summary table to the terminal and writes a machine-readable `coverage/coverage-summary.json` for CI. Files under `node_modules/`, `dist/`, `.git/`, `coverage/`, `build/`, `.next/`, `.nuxt/`, and the test files themselves are excluded, so only the code under test is measured.
+- `CoverageReport`/`CoverageMetric`/`FileCoverage` types (`src/types.ts`) now describe the real shape produced by the new coverage engine, replacing the previously-unused placeholder `CoverageReport` interface.
+
+### Português
+
+#### Adicionado
+
+- **Cobertura de código de verdade** — `--coverage` agora de fato instrumenta e reporta cobertura, em vez de exibir um aviso de "não implementado". Implementado com o Profiler nativo do `node:inspector` (cobertura precisa do V8, no nível de bloco) — sem dependência de `istanbul`/`nyc`/`c8`, preservando a garantia de zero dependências em runtime. Reporta cobertura de linhas, statements (aproximado a partir dos dados de linha), funções e branches (aproximado a partir dos ranges de bloco aninhados do V8). Imprime uma tabela resumo por arquivo no terminal e grava um `coverage/coverage-summary.json` legível por máquina para o CI. Arquivos em `node_modules/`, `dist/`, `.git/`, `coverage/`, `build/`, `.next/`, `.nuxt/`, e os próprios arquivos de teste são excluídos, de forma que só o código sob teste é medido.
+- Os tipos `CoverageReport`/`CoverageMetric`/`FileCoverage` (`src/types.ts`) agora descrevem o formato real produzido pelo novo motor de cobertura, substituindo a interface `CoverageReport` anterior, que era apenas um placeholder não utilizado.
+
 ## [1.4.11] — 2026-08-01
 
 ### English

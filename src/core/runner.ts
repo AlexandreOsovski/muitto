@@ -8,6 +8,13 @@ import { ResultCollector } from "./collector.js";
 import { PerformanceTimer } from "./timer.js";
 import { loadConfig, getTestFiles, type LoadOptions } from "../config/loader.js";
 import { setSnapshotContext, setUpdateMode, flushSnapshots } from "./snapshots.js";
+import {
+  startCoverage,
+  stopCoverage,
+  buildCoverageReport,
+  printCoverageReport,
+  writeCoverageReport,
+} from "./coverage.js";
 
 /**
  * Real, un-mockable timer references captured at module load time — before
@@ -48,6 +55,8 @@ export interface RunOptions extends Omit<LoadOptions, 'reporter'> {
  * 4. Runs each test file sequentially
  * 5. Supports bail mode (stop on first error)
  * 6. Generates final results summary
+ * 7. When `config.coverage` is true, prints and writes a V8-based code
+ *    coverage report (see core/coverage.ts) covering the whole run
  *
  * @async
  * @param {RunOptions} [options={}] - Execution configuration options
@@ -93,11 +102,12 @@ export async function runTests(options: RunOptions = {}): Promise<RunSummary> {
 
   setUpdateMode(options.updateSnapshots ?? config.updateSnapshots ?? false);
 
-  if (config.coverage) {
-    console.log(
-      "[muitto] --coverage was requested, but code coverage instrumentation is not implemented yet. No coverage report will be generated."
-    );
-  }
+  /**
+   * When coverage is requested, V8 must start tracking execution BEFORE
+   * any test file (or the code it imports) is loaded, otherwise the very
+   * first lines executed would be missed.
+   */
+  const coverageHandle = config.coverage ? await startCoverage() : undefined;
 
   // Get test files (auto-discovery or explicit)
   let files = options.files || [];
@@ -141,6 +151,21 @@ export async function runTests(options: RunOptions = {}): Promise<RunSummary> {
     if (options.bail && result.results.some((r: TestResult) => r.status === "failed")) {
       break;
     }
+  }
+
+  /**
+   * Coverage is measured across the whole run rather than per-file: V8's
+   * precise coverage accumulates counts globally, and taking a snapshot
+   * after every file would both be wasteful and reset nothing anyway
+   * (coverage isn't cleared between takePreciseCoverage calls unless
+   * explicitly reset), so it's collected once here at the end.
+   */
+  if (coverageHandle) {
+    const rawCoverage = await stopCoverage(coverageHandle);
+    const testFilePaths = new Set(files.map((f) => resolve(f)));
+    const report = buildCoverageReport(rawCoverage, cwd, testFilePaths);
+    printCoverageReport(report);
+    writeCoverageReport(report, cwd);
   }
 
   const summary = collector.getSummary();

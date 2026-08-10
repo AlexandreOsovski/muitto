@@ -515,37 +515,82 @@ export interface WorkerResponse {
 // ---------------------------------------------------------------------------
 
 /**
+ * A single coverage metric (lines, statements, functions, or branches)
+ *
+ * `skipped` counts items that were intentionally excluded from the total
+ * (currently always 0 — MUITTO's coverage doesn't support ignore comments
+ * yet). `pct` is `covered / total * 100`, rounded to one decimal, and is
+ * defined as 100 when `total` is 0 (nothing to cover means full coverage).
+ *
+ * @interface CoverageMetric
+ */
+export interface CoverageMetric {
+  /** Total number of countable items (lines, functions, etc.) */
+  total: number;
+  /** Number of items that were executed at least once */
+  covered: number;
+  /** Number of items intentionally excluded from the total (currently always 0) */
+  skipped: number;
+  /** Percentage covered, 0-100 (100 when total is 0) */
+  pct: number;
+}
+
+/**
+ * Coverage data for a single source file
+ *
+ * @interface FileCoverage
+ */
+export interface FileCoverage {
+  /** Line coverage for this file */
+  lines: CoverageMetric;
+  /**
+   * Statement coverage for this file. MUITTO approximates statement
+   * coverage with line coverage (no AST-level statement tracking), so
+   * this currently always mirrors `lines`.
+   */
+  statements: CoverageMetric;
+  /** Function coverage for this file (named functions only) */
+  functions: CoverageMetric;
+  /**
+   * Branch coverage for this file, approximated from V8's nested block
+   * ranges (a function with more than one range has "sub-ranges"
+   * representing branches taken/not taken). This is a heuristic, not a
+   * true AST-based branch analysis — see the comment in core/coverage.ts.
+   */
+  branches: CoverageMetric;
+  /** 1-based line numbers detected as not executed */
+  uncoveredLines: number[];
+}
+
+/**
  * Code coverage report generated during test execution
+ *
+ * Produced by `core/coverage.ts` from Node's built-in `node:inspector`
+ * Profiler (precise, block-level V8 coverage) — no external coverage
+ * library is used, keeping MUITTO's zero-runtime-dependency guarantee.
  *
  * @interface CoverageReport
  *
  * @example
  * const report: CoverageReport = {
  *   lines: { total: 500, covered: 450, skipped: 0, pct: 90 },
- *   statements: { total: 520, covered: 468, skipped: 0, pct: 90 },
+ *   statements: { total: 500, covered: 450, skipped: 0, pct: 90 },
  *   functions: { total: 50, covered: 48, skipped: 0, pct: 96 },
  *   branches: { total: 100, covered: 85, skipped: 0, pct: 85 },
- *   files: { ... }
+ *   files: { 'src/math.ts': { lines: {...}, ... } }
  * };
  */
 export interface CoverageReport {
-  /** Line coverage metrics */
-  lines: { total: number; covered: number; skipped: number; pct: number };
-  /** Statement coverage metrics */
-  statements: { total: number; covered: number; skipped: number; pct: number };
-  /** Function coverage metrics */
-  functions: { total: number; covered: number; skipped: number; pct: number };
-  /** Branch coverage metrics */
-  branches: { total: number; covered: number; skipped: number; pct: number };
-  /** Per-file detailed coverage data */
-  files: Record<string, {
-    /** Line numbers that were covered */
-    lines: number[];
-    /** Function names mapped to execution counts */
-    functions: Record<string, number>;
-    /** Branch IDs mapped to execution counts */
-    branches: Record<string, number[]>;
-  }>;
+  /** Aggregate line coverage across all covered files */
+  lines: CoverageMetric;
+  /** Aggregate statement coverage across all covered files (mirrors `lines`) */
+  statements: CoverageMetric;
+  /** Aggregate function coverage across all covered files */
+  functions: CoverageMetric;
+  /** Aggregate branch coverage across all covered files (approximate) */
+  branches: CoverageMetric;
+  /** Per-file coverage data, keyed by path relative to the run's cwd */
+  files: Record<string, FileCoverage>;
 }
 
 // ---------------------------------------------------------------------------
@@ -734,4 +779,6 @@ export type {
   Reporter as ReporterType,
   MuittoConfig as MuittoConfigType,
   CoverageReport as CoverageReportType,
+  CoverageMetric as CoverageMetricType,
+  FileCoverage as FileCoverageType,
 };
